@@ -1,0 +1,91 @@
+body {
+  background-color: #2F2C2C;
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 20px;
+  box-sizing: border-box;
+  color: #FFFFFF;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+}
+
+.inventario-container {
+  background-color: #3A3333;
+  padding: 30px;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.4);
+  box-sizing: border-box;
+}
+
+.inventario-titulo {
+  text-align: center;
+  margin-bottom: 25px;
+}
+
+.inventario-label {
+  display: block;
+  margin: 10px 0 5px;
+}
+
+.inventario-input,
+.inventario-textarea {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 12px;
+  background-color: #bcbcbc;
+  border: none;
+  border-radius: 6px;
+  font-weight: bold;
+  box-sizing: border-box;
+  font-size: 1rem;
+}
+
+.inventario-btn-principal,
+.inventario-btn-eliminar,
+.inventario-btn-secundario,
+.inventario-btn-regresar {
+  display: block;
+  width: 100%;
+  padding: 0.75rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 1rem;
+  margin-top: 1rem;
+  transition: background-color 0.3s ease;
+  color: #FFFFFF;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.inventario-btn-principal {
+  background-color: #8B141E;
+}
+
+.inventario-btn-principal:hover {
+  background-color: #A4161A;
+}
+
+.inventario-btn-eliminar {
+  background-color: #6e0f16;
+}
+
+.inventario-btn-eliminar:hover {
+  background-color: #8B141E;
+}
+
+.inventario-btn-secundario,
+.inventario-btn-regresar {
+  background-color: #8B5E3C;
+  text-decoration: none;
+}
+
+.inventario-btn-secundario:hover,
+.inventario-btn-regresar:hover {
+  background-color: #A67C52;
+}

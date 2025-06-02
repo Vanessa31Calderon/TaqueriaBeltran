@@ -1,0 +1,154 @@
+<!--
+Esta página permite al mesero visualizar y filtrar los productos de comida disponibles por categoría (Asada o Tripa).
+Muestra una lista de productos con su precio, imagen, nombre y controles para agregar o eliminar unidades.
+Los productos y sus imágenes se obtienen dinámicamente desde la base de datos.
+El diseño está optimizado para uso en dispositivos móviles, facilitando la selección y gestión de productos en 
+la toma de pedidos.
+-->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Comidas: Asada y Tripa</title>
+  <link rel="stylesheet" href="/css/Mesero/comidasFiltradas.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Comidas:</h1>
+    <div class="filtros">
+      <button class="filtro-btn active" id="btn-asada">Asada</button>
+      <button class="filtro-btn" id="btn-tripa">Tripa</button>
+    </div>
+    <div id="lista-comidas"></div>
+    <button class="agregar-productos-btn" id="btn-agregar-productos">Agregar productos</button>
+  </div>
+  <script>
+    let filtro = 'asada';
+    let productosSeleccionados = [];
+
+    function renderComidas(comidas) {
+      const cont = document.getElementById('lista-comidas');
+      const btnAgregar = document.getElementById('btn-agregar-productos');
+      cont.innerHTML = '';
+      productosSeleccionados = [];
+      if (comidas.length === 0) {
+        cont.innerHTML = '<div class="sin-productos">No hay comidas disponibles.</div>';
+        btnAgregar.style.display = 'none';
+        return;
+      }
+      btnAgregar.style.display = '';
+      comidas.forEach(comida => {
+        const div = document.createElement('div');
+        div.className = 'producto-card';
+        let cantidad = 0;
+        div.innerHTML = `
+          <div class="producto-precio">$${comida.precio}</div>
+          <img class="producto-img" src="${comida.imagen}">
+          <div class="producto-nombre">${comida.nombre}</div> 
+          <div class="producto-nombre">${comida.descripcion}</div>
+          <div class="producto-cantidad">
+            <button class="btn-eliminar">Eliminar</button>
+            <span class="contador">${cantidad}</span>
+            <button class="btn-agregar">Agregar</button>
+          </div>
+        `;
+        const btnEliminar = div.querySelector('.btn-eliminar');
+        const btnAgregar = div.querySelector('.btn-agregar');
+        const spanContador = div.querySelector('.contador');
+        btnEliminar.addEventListener('click', function() {
+          if (cantidad > 0) {
+            cantidad--;
+            spanContador.textContent = cantidad;
+            actualizarSeleccionados(comida.id_producto, cantidad);
+          }
+        });
+        btnAgregar.addEventListener('click', function() {
+          cantidad++;
+          spanContador.textContent = cantidad;
+          actualizarSeleccionados(comida.id_producto, cantidad);
+        });
+        cont.appendChild(div);
+        // Inicializa el producto en el array de seleccionados
+        productosSeleccionados.push({ id_producto: comida.id_producto, cantidad: 0 });
+      });
+    }
+
+    function actualizarSeleccionados(id_producto, cantidad) {
+      const prod = productosSeleccionados.find(p => p.id_producto === id_producto);
+      if (prod) prod.cantidad = cantidad;
+    }
+
+    function cargarComidas() {
+      fetch('/api/comidas-filtradas')
+        .then(res => res.json())
+        .then(comidas => {
+          const filtradas = comidas.filter(c => c.categoria.toLowerCase().includes(filtro));
+          renderComidas(filtradas);
+        })
+        .catch(() => {
+          document.getElementById('lista-comidas').textContent = 'Error al cargar las comidas.';
+        });
+    }
+
+    document.getElementById('btn-asada').addEventListener('click', function() {
+      filtro = 'asada';
+      this.classList.add('active');
+      document.getElementById('btn-tripa').classList.remove('active');
+      cargarComidas();
+    });
+    document.getElementById('btn-tripa').addEventListener('click', function() {
+      filtro = 'tripa';
+      this.classList.add('active');
+      document.getElementById('btn-asada').classList.remove('active');
+      cargarComidas();
+    });
+
+    document.getElementById('btn-agregar-productos').addEventListener('click', async function() {
+      // Filtra solo los productos con cantidad > 0
+      const seleccionados = productosSeleccionados.filter(p => p.cantidad > 0);
+      if (seleccionados.length === 0) {
+        alert('Selecciona al menos un producto.');
+        return;
+      }
+      
+      const params = new URLSearchParams(window.location.search);
+      const id_mesa = parseInt(localStorage.getItem('id_mesa'));
+      const id_persona = parseInt(params.get('persona')) || 1;
+      const id_usuario = localStorage.getItem('id_usuario');
+      if (!id_usuario || !id_mesa || !id_persona) {
+        alert('Faltan datos para el pedido.');
+        return;
+      }
+      // Envía cada producto como un pedido
+      for (const prod of seleccionados) {
+        const body = {
+          id_usuario,
+          id_mesa,
+          id_producto: prod.id_producto,
+          cantidad_productos: prod.cantidad,
+          id_persona
+        };
+        try {
+          const res = await fetch('/pedido', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+          });
+          if (!res.ok) throw new Error('Error al guardar el pedido');
+        } catch (e) {
+          alert('Error al guardar el pedido: ' + e.message);
+          return;
+        }
+      }
+      alert('Pedido(s) guardado(s) correctamente.');
+      // Redirige a la página para tomar pedido con el número de mesa
+      window.location.href = `nuevaPersona.html?mesa=${id_mesa}&persona=${id_persona}`;
+      // Si prefieres limpiar y recargar, comenta la línea de arriba y descomenta la de abajo
+      // cargarComidas();
+    });
+
+    // Carga inicial
+    cargarComidas();
+  </script>
+</body>
+</html>

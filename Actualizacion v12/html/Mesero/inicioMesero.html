@@ -1,0 +1,42 @@
+<!-- Este archivo representa la página de inicio para los meseros en el sistema de gestión de pedidos. 
+ Proporciona una interfaz gráfica que permite al mesero realizar diversas acciones relacionadas con la 
+ gestión de pedidos, tales como: 
+ - Registrar un nuevo pedido. 
+ - Modificar un pedido existente. 
+ - Generar un ticket para los clientes. 
+ Incluye un campo que muestra el nombre del mesero y botones estilizados para facilitar la navegación y 
+ ejecución de las acciones. -->
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Página del Mesero</title>
+  <link rel="stylesheet" href="/css/Mesero/inicioMesero.css">
+</head>
+<body>
+  <div class="container">
+    <div class="profile">
+      <label for="nombre-mesero">Bienvenid@ Mesero:</label>
+      <input type="text" id="nombre-mesero" readonly>
+    </div>
+    <div class="actions">
+      <button class="btn" id="registrar-pedido">Registrar pedido</button>
+    </div>
+  </div>
+
+  <!-- Enlace al archivo JavaScript externo -->
+  <script src="/js/Mesero/seleccionMesa.js"></script>
+  <script src="/js/Mesero/registrarpedido.js"></script>
+  <script>
+    document.getElementById('registrar-pedido').onclick = function() {
+      window.location.href = '/html/Mesero/disponibilidadMesas.html';
+    };
+    // Mostrar el nombre del mesero desde localStorage
+    const nombreMesero = localStorage.getItem('nombres');
+    console.log('Nombre del mesero:', nombreMesero);
+    document.getElementById('nombre-mesero').value = nombreMesero || 'Nombre del Mesero';
+  </script>
+</body>
+</html>

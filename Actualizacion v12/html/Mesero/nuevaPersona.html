@@ -1,0 +1,77 @@
+<!-- Este archivo representa la página para añadir personas a una mesa en el sistema de gestión de pedidos. 
+ Proporciona una interfaz gráfica que permite al mesero identificar a cada persona en la mesa y seleccionar
+opciones como: 
+- Comidas. 
+- Bebidas. 
+- Postres. 
+El número de la mesa y el número de la persona se muestran dinámicamente en la página, basándose en los 
+parámetros de la URL. Incluye un botón para agregar la orden, que redirige a la página de selección de 
+pedidos y actualiza el contador de personas. -->
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Añadir Persona</title>
+  <link rel="stylesheet" href="/css/Mesero/nuevaPersona.css">
+</head>
+<body>
+  <div class="container">
+    <div class="mesa-display">
+      <span id="mesa-seleccionada"></span>
+    </div>
+
+    <!-- Mostrar el número de la persona -->
+    <div class="persona-display">
+      <h2 id="persona-seleccionada"></h2>
+    </div>
+
+    <!-- Opciones -->
+    <div class="persona-opciones">
+      <button class="btn-opcionComida">Comidas</button>
+      <button class="btn-opcionBebida">Bebidas</button>
+      <button class="btn-opcionPostre">Postres</button>
+    </div>
+
+    <button class="btn-agregar" id="btn-agregar-persona">Agregar a la orden</button>
+  </div>
+
+  <script>
+    // Obtener los parámetros de la URL
+    const params = new URLSearchParams(window.location.search);
+    const mesa = params.get('mesa');
+    const persona = parseInt(params.get('persona')) || 1;
+
+    // Mostrar el número de la mesa y persona
+    document.getElementById('mesa-seleccionada').textContent = `Mesa ${mesa}`;
+    if (persona === 10) {
+      document.getElementById('persona-seleccionada').textContent = 'Extra';
+    } else {
+      document.getElementById('persona-seleccionada').textContent = `Persona ${persona}`;
+    }
+
+    // Botón para agregar a la orden
+    const btnAgregarPersona = document.getElementById('btn-agregar-persona');
+    btnAgregarPersona.addEventListener('click', () => {
+      const siguientePersona = persona + 1;
+      window.location.href = `tomarPedido.html?mesa=${mesa}&persona=${siguientePersona}`;
+    });
+
+    // Botón Comidas
+    document.querySelector('.btn-opcionComida').addEventListener('click', () => {
+      window.location.href = `/html/Mesero/comidasFiltradas.html?mesa=${mesa}&persona=${persona}`;
+    });
+
+    // Botón Bebidas
+    document.querySelector('.btn-opcionBebida').addEventListener('click', () => {
+      window.location.href = `/html/Mesero/bebidasFiltradas.html?mesa=${mesa}&persona=${persona}`;
+    });
+
+    // Botón Postres
+    document.querySelector('.btn-opcionPostre').addEventListener('click', () => {
+      window.location.href = `/html/Mesero/postresFiltrados.html?mesa=${mesa}&persona=${persona}`;
+    });
+  </script>
+</body>
+</html>

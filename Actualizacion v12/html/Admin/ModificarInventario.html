@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Modificar Inventario</title>
+  <link rel="stylesheet" href="../../css/Admin/ModificarInventario.css" />
+</head>
+<body>
+  <div class="inventario-container">
+    <h2 class="inventario-titulo">Modificar Inventario</h2>
+    <form class="inventario-form" id="formModificarProducto" action="#" method="post">
+
+      <label for="id_producto" class="inventario-label">ID del producto</label>
+      <input type="text" id="id_producto" class="inventario-input" required />
+
+      <label for="nombre" class="inventario-label">Nombre del producto</label>
+      <input type="text" id="nombre" name="nombre" class="inventario-input" required />
+
+      <label for="descripcion" class="inventario-label">Descripción</label>
+      <textarea id="descripcion" name="descripcion" rows="2" class="inventario-textarea"></textarea>
+
+      <label for="categoria" class="inventario-label">Categoría</label>
+      <input type="text" id="categoria" name="categoria" class="inventario-input" required />
+
+      <label for="marca" class="inventario-label">Marca</label>
+      <input type="text" id="marca" name="marca" class="inventario-input" required />
+
+      <label for="precio" class="inventario-label">Precio unitario</label>
+      <input type="number" id="precio" name="precio" class="inventario-input" required step="0.01" />
+
+      <label for="stock_actual" class="inventario-label">Stock actual</label>
+      <input type="number" id="stock_actual" name="stock_actual" class="inventario-input" required />
+
+      <label for="stock_minimo" class="inventario-label">Stock mínimo</label>
+      <input type="number" id="stock_minimo" name="stock_minimo" class="inventario-input" required />
+
+      <button type="submit" class="inventario-btn-principal">Guardar Cambios</button>
+      <button type="button" id="btnCancelar" class="inventario-btn-secundario">Cancelar</button>
+      <button type="button" id="btnEliminar" class="inventario-btn-eliminar">Eliminar Producto</button>
+      <a href="InicioAdmin.html" class="inventario-btn-regresar">Regresar</a>
+    </form>
+  </div>
+
+  <script>
+    const idInput = document.getElementById('id_producto');
+    const form = document.getElementById('formModificarProducto');
+    const btnCancelar = document.getElementById('btnCancelar');
+    const btnEliminar = document.getElementById('btnEliminar');
+
+    // Cargar datos del producto
+    idInput.addEventListener('blur', async () => {
+      const id = idInput.value.trim();
+      if (!id) return;
+
+      try {
+        const res = await fetch(`/producto/${id}?rol=administrador`, { credentials: 'include' });
+        if (!res.ok) {
+          alert('Producto no encontrado');
+          return;
+        }
+
+        const producto = await res.json();
+
+        document.getElementById('nombre').value = producto.nombre || '';
+        document.getElementById('descripcion').value = producto.descripcion || '';
+        document.getElementById('categoria').value = producto.categoria || '';
+        document.getElementById('marca').value = producto.marca || '';
+        document.getElementById('precio').value = producto.precio || '';
+        document.getElementById('stock_actual').value = producto.stock_actual || '';
+        document.getElementById('stock_minimo').value = producto.stock_minimo || '';
+      } catch (err) {
+        console.error('Error al cargar producto:', err);
+        alert('Error al conectar con el servidor');
+      }
+    });
+
+    // Enviar cambios
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const id = idInput.value.trim();
+      if (!id) {
+        alert('Ingresa un ID válido para actualizar');
+        return;
+      }
+
+      const datosActualizados = {
+        nombre: document.getElementById('nombre').value.trim(),
+        descripcion: document.getElementById('descripcion').value.trim(),
+        categoria: document.getElementById('categoria').value.trim(),
+        marca: document.getElementById('marca').value.trim(),
+        precio: parseFloat(document.getElementById('precio').value),
+        stock_actual: parseInt(document.getElementById('stock_actual').value),
+        stock_minimo: parseInt(document.getElementById('stock_minimo').value),
+      };
+
+      try {
+        const res = await fetch(`/producto/${id}?rol=administrador`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(datosActualizados),
+          credentials: 'include'
+        });
+
+        if (!res.ok) {
+          const errorResp = await res.json();
+          alert('Error al actualizar el producto: ' + (errorResp.error || res.statusText));
+          return;
+        }
+
+        alert('Producto actualizado correctamente');
+      } catch (err) {
+        console.error('Error al actualizar producto:', err);
+        alert('Error al conectar con el servidor');
+      }
+    });
+
+    // Cancelar (resetear formulario)
+    btnCancelar.addEventListener('click', () => {
+      form.reset();
+    });
+
+    // Eliminar producto
+    btnEliminar.addEventListener('click', async () => {
+      const id = idInput.value.trim();
+      if (!id) {
+        alert('Ingresa un ID válido para eliminar');
+        return;
+      }
+
+      const confirmar = confirm('¿Estás seguro de que deseas eliminar este producto?');
+      if (!confirmar) return;
+
+      try {
+        const res = await fetch(`/producto/${id}?rol=administrador`, {
+          method: 'DELETE',
+          credentials: 'include'
+        });
+
+        if (!res.ok) {
+          const errorResp = await res.json();
+          alert('Error al eliminar el producto: ' + (errorResp.error || res.statusText));
+          return;
+        }
+
+        alert('Producto eliminado correctamente');
+        form.reset();
+      } catch (err) {
+        console.error('Error al eliminar producto:', err);
+        alert('Error al conectar con el servidor');
+      }
+    });
+  </script>
+</body>
+</html>

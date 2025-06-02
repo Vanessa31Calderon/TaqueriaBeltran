@@ -1,0 +1,43 @@
+/* Estilo general */
+body {
+  font-family: 'Segoe UI', sans-serif;
+  background-color: #2F2C2C; /* Fondo oscuro */
+  color: white;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+.container {
+  text-align: center;
+  width: 100%;
+  max-width: 400px;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+h1 {
+  font-size: 24px;
+  margin-bottom: 20px;
+  color: #FFFFFF;
+}
+
+/* Botón para añadir nueva mesa */
+.btn-agregar {
+  background-color: #8B5E3C; /* Amarillo/café */
+  color: white;
+  padding: 15px 25px; /* Aumentar el tamaño del botón */
+  border: none;
+  border-radius: 8px; /* Bordes más redondeados */
+  font-size: 18px; /* Texto más grande */
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.btn-agregar:hover {
+  background-color: #A67C52; /* Amarillo/café más claro */
+  transform: scale(1.1); /* Efecto de escala más notable */
+}

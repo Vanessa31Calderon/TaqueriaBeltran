@@ -1,0 +1,147 @@
+<!-- Este documento HTML es solo para actualizar información de un empleado -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Actualizar Empleados</title>
+  <link rel="stylesheet" href="../../css/Admin/AdministrarEmpleados.css" />
+</head>
+<body>
+  <div class="admin-empleados-container">
+    <h2 class="admin-empleados-titulo">Actualizar Empleados</h2>
+    <form class="admin-empleados-form" action="#" method="post">
+      
+      <label for="id_empleado" class="admin-empleados-label">ID</label>
+      <input type="text" name="id" id="id_empleado" class="admin-empleados-input" disabled />
+
+      <label for="nombre" class="admin-empleados-label">Nombres</label>
+      <input type="text" id="nombre" name="nombre" class="admin-empleados-input" required />
+
+      <label for="ap_paterno" class="admin-empleados-label">Apellido Paterno</label>
+      <input type="text" id="ap_paterno" name="ap_paterno" class="admin-empleados-input" required />
+
+      <label for="ap_materno" class="admin-empleados-label">Apellido Materno</label>
+      <input type="text" id="ap_materno" name="ap_materno" class="admin-empleados-input" required />
+
+      <label for="correo" class="admin-empleados-label">Correo</label>
+      <input type="text" id="correo" name="correo" class="admin-empleados-input" required />
+
+      <label for="contraseña" class="admin-empleados-label">Contraseña</label>
+      <input type="text" id="contraseña" name="contraseña" class="admin-empleados-input" disabled />
+
+      <label for="rol" class="admin-empleados-label">Rol</label>
+      <input type="text" id="rol" name="rol" class="admin-empleados-input" required />
+
+      <button type="submit" class="admin-empleados-btn-principal">Actualizar Empleado</button>
+      <button type="button" class="admin-empleados-btn-secundario" id="btn-cancelar">Cancelar</button>
+      <a href="Empleados.html" class="admin-empleados-btn-regresar">Regresar</a>
+    </form>
+  </div>
+
+  <script>
+    const formulario = document.querySelector('.admin-empleados-form');
+
+    // Función para llenar formulario con datos recibidos
+    function llenarFormulario(datos) {
+      document.getElementById('nombre').value = datos.nombres || '';
+      document.getElementById('ap_paterno').value = datos.ap_paterno || '';
+      document.getElementById('ap_materno').value = datos.ap_materno || '';
+      document.getElementById('correo').value = datos.correo || '';
+      document.getElementById('contraseña').value = datos.contraseña || '';
+      document.getElementById('rol').value = datos.rol || '';
+    }
+
+    // Cuando se pierde el foco del input ID, traemos los datos
+    document.getElementById('id_empleado').addEventListener('blur', async () => {
+      const id = document.getElementById('id_empleado').value.trim();
+      if (!id) return; // no hacemos nada si está vacío
+
+      try {
+        const response = await fetch(`/usuario/${id}`);
+        if (response.ok) {
+          const data = await response.json();
+          llenarFormulario(data);
+        } else {
+          alert('Usuario no encontrado');
+          formulario.reset();
+        }
+      } catch (error) {
+        console.error('Error al obtener usuario:', error);
+        alert('Error al conectar con el servidor');
+      }
+    });
+
+    formulario.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const id = document.getElementById('id_empleado').value;
+
+      const datos = {
+        nombres: document.getElementById('nombre').value,
+        ap_paterno: document.getElementById('ap_paterno').value,
+        ap_materno: document.getElementById('ap_materno').value,
+        correo: document.getElementById('correo').value,
+        contraseña: document.getElementById('contraseña').value,
+        rol: document.getElementById('rol').value,
+      };
+
+      try {
+        const response = await fetch(`/usuario/${id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(datos)
+        });
+
+        if (response.ok) {
+          alert('Empleado actualizado correctamente');
+          formulario.reset();
+        } else {
+          const errorText = await response.text();
+          alert('Error al actualizar empleado: ' + errorText);
+        }
+      } catch (error) {
+        console.error('Error al enviar datos:', error);
+        alert('Error al conectar con el servidor');
+      }
+    });
+
+    // Botón Cancelar: limpiar formulario
+    document.getElementById('btn-cancelar').addEventListener('click', () => {
+      formulario.reset();
+    });
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      // Obtener el id de la URL
+      const params = new URLSearchParams(window.location.search);
+      const id = params.get('id');
+      if (!id) {
+        alert('No se encontró el ID del empleado');
+        return;
+      }
+
+      try {
+        // Pedir los datos al backend
+        const response = await fetch(`/usuario/${id}`);
+        if (!response.ok) throw new Error('No se pudo obtener el empleado');
+        const empleado = await response.json();
+
+        // Rellena los campos del formulario
+        document.getElementById('id_empleado').value = empleado.id_usuario || ''; 
+        document.getElementById('nombre').value = empleado.nombres || '';
+        document.getElementById('ap_paterno').value = empleado.ap_paterno || '';
+        document.getElementById('ap_materno').value = empleado.ap_materno || '';
+        document.getElementById('correo').value = empleado.correo || '';
+        document.getElementById('contraseña').value = empleado.contraseña || '';
+        document.getElementById('rol').value = empleado.rol || '';
+        // Si tienes más campos, agrégalos aquí
+      } catch (error) {
+        alert('Error al cargar los datos del empleado');
+      }
+    });
+  </script>
+</body>
+</html>
+

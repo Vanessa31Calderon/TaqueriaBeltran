@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Visualizar Orden</title>
+  <link rel="stylesheet" href="/css/Mesero/visualizarOrden.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.7.0/jspdf.plugin.autotable.min.js"></script>
+  <script src="/js/generarTicket.js"></script>
+</head>
+<body>
+  <div class="container">
+    <h1>Orden de la Mesa <span id="mesa-num"></span></h1>
+    <!-- Botones de añadir y eliminar productos -->
+    <div class="btn-wrapper" style="margin-bottom: 15px;">
+      <button class="btn-volver" id="btn-add-producto" onclick="redirigirNuevaPersona()">Añadir productos</button>
+      <button class="btn-volver" id="btn-del-producto" onclick="mostrarEliminarExtra()">Eliminar productos</button>
+    </div>
+    <div id="orden-lista"></div>
+    <div class="btn-wrapper">
+      <button class="btn-volver" onclick="volver()">Volver</button>
+      <button class="btn-ticket" onclick="generarTicket()">Generar Ticket</button>
+    </div>
+  </div>
+
+  <!-- Formulario para añadir productos extra (inicialmente oculto) -->
+  <div id="form-extra" style="display:none; margin-top:15px;">
+    <input type="text" id="extra-nombre" placeholder="Nombre del producto" required>
+    <input type="number" id="extra-cantidad" placeholder="Cantidad" min="1" value="1" required>
+    <input type="number" id="extra-precio" placeholder="Precio" min="0" step="0.01" required>
+    <button class="btn-ticket" onclick="agregarExtra()">Agregar</button>
+    <button class="btn-volver" onclick="ocultarFormularioExtra()">Cancelar</button>
+  </div>
+
+  <!-- Formulario para eliminar productos extra (inicialmente oculto) -->
+  <div id="form-eliminar-extra" style="display:none; margin-top:15px;">
+    <select id="extra-eliminar-select"></select>
+    <button class="btn-ticket" onclick="eliminarExtra()">Eliminar</button>
+    <button class="btn-volver" onclick="ocultarEliminarExtra()">Cancelar</button>
+  </div>
+
+  <!-- Tabla de productos extra -->
+  <div id="extras-lista" style="margin-top:20px;"></div>
+
+  <script>
+    // Obtener el número de mesa de la URL
+    const params = new URLSearchParams(window.location.search);
+    const id_mesa = params.get('mesa');
+    document.getElementById('mesa-num').textContent = id_mesa;
+
+    // Petición POST a /pedido/por-mesa con id_mesa en el body
+    fetch('/pedido/por-mesa', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id_mesa })
+    })
+    .then(res => res.json())
+    .then(data => {
+      const cont = document.getElementById('orden-lista');
+      if (!data || data.length === 0) {
+        cont.innerHTML = '<div class="sin-productos">No hay productos en la orden.</div>';
+        return;
+      }
+      console.log(data);
+      // Agrupar por id_persona
+      const grupos = {};
+      data.forEach(item => {
+        if (!grupos[item.id_persona]) grupos[item.id_persona] = [];
+        grupos[item.id_persona].push(item);
+      });
+      let html = '';
+      // Calcular el total de la mesa correctamente
+      let total = 0;
+      data.forEach(item => {
+        const precio = item.precio !== undefined ? Number(item.precio) : 0;
+        const subtotal = precio * Number(item.cantidad_productos);
+        total += subtotal;
+      });
+      Object.keys(grupos).forEach(id_persona => {
+        // Si es persona 10, mostrar "Extra"
+        const titulo = (id_persona == 10) ? 'Extra' : `Persona ${id_persona}`;
+        html += `<h3>${titulo}</h3>`;
+        html += `<table class="orden-tabla">
+          <thead>
+            <tr>
+              <th>Producto</th>
+              <th>Categoría</th>
+              <th>Cantidad</th>
+              <th>Precio</th>
+            </tr>
+          </thead>
+          <tbody>`;
+        grupos[id_persona].forEach(item => {
+          const precio = item.precio !== undefined ? Number(item.precio) : 0;
+          html += `<tr>
+            <td>${item.nombre}</td>
+            <td>${item.categoria}</td>
+            <td>${item.cantidad_productos}</td>
+            <td>$${precio.toFixed(2)}</td>
+          </tr>`;
+        });
+        html += '</tbody></table>';
+      });
+      // Tabla de total de la mesa seleccionada
+      html += `<table class="tabla-total">
+        <thead>
+          <tr>
+            <th>Total mesa ${id_mesa}</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Costo total</td>
+            <td>$${total.toFixed(2)}</td>
+          </tr>
+        </tbody>
+      </table>`;
+      cont.innerHTML = html;
+    })
+    .catch(() => {
+      document.getElementById('orden-lista').textContent = 'Error al cargar la orden.';
+    });
+    
+    function volver() {
+      window.history.back();
+    }
+
+    function generarTicket() {
+      // 80mm de ancho, altura automática
+      const doc = new window.jspdf.jsPDF({
+        unit: 'mm',
+        format: [80, 297], // 80mm ancho, alto A4 (se ajusta solo)
+        orientation: 'portrait'
+      });
+
+      let y = 12;
+
+      // Nombre taquería centrado arriba
+      doc.setFontSize(18);
+      doc.setFont('helvetica', 'bold');
+      doc.text('TAQUERIA BELTRAN', 40, y, { align: 'center' });
+      y += 8;
+
+      // Dirección y datos
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      doc.text('Av. Principal #123\nCol. Vila Bonita\nTel: 555-123-4567\n', 40, y, { align: 'center' });
+      y += 20;
+
+      // Título ticket
+      doc.setFontSize(13);
+      doc.setFont('helvetica', 'bold');
+      doc.text(`Ticket - Mesa ${document.getElementById('mesa-num').textContent}`, 40, y, { align: 'center' });
+      y += 8;
+
+      // Fecha y hora
+      const fecha = new Date();
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
+      doc.text(`Fecha: ${fecha.toLocaleDateString()} ${fecha.toLocaleTimeString()}`, 40, y, { align: 'center' });
+      y += 8;
+
+      // --- ENVÍO DE DATOS A LA API /venta ---
+      // Obtener id_usuario (ajusta según tu sistema de login)
+      const id_usuario = localStorage.getItem('id_usuario') || sessionStorage.getItem('id_usuario') || '1';
+
+      // Recolectar productos de la orden
+      const productos = [];
+      // Tablas de personas
+      const mesas = document.querySelectorAll('.orden-tabla');
+      mesas.forEach((tabla, idx) => {
+        const categoria = tabla.previousElementSibling.textContent;
+        tabla.querySelectorAll('tbody tr').forEach(tr => {
+          const tds = tr.querySelectorAll('td');
+          productos.push({
+            id_usuario,
+            nombre: tds[0].textContent,
+            categoria: tds[1].textContent,
+            cantidad_productos: Number(tds[2].textContent),
+            precio: Number(tds[3].textContent.replace('$', '').replace(',', '.')),
+            fecha_hora_venta: fecha.toISOString()
+          });
+        });
+      });
+
+      // También agrega los extras si tienes una tabla de extras
+      const tablaExtras = document.querySelector('.tabla-extras');
+      if (tablaExtras) {
+        tablaExtras.querySelectorAll('tbody tr').forEach(tr => {
+          const tds = tr.querySelectorAll('td');
+          if (tds.length >= 4 && tds[0].textContent !== "Total extras") {
+            productos.push({
+              id_usuario,
+              nombre: tds[0].textContent,
+              categoria: "Extra",
+              cantidad_productos: Number(tds[1].textContent),
+              precio: Number(tds[2].textContent.replace('$', '').replace(',', '.')),
+              fecha_hora_venta: fecha.toISOString()
+            });
+          }
+        });
+      }
+
+      // Enviar cada producto a la API /venta
+      const promesas = productos.map(prod =>
+        fetch('/venta', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(prod)
+        })
+      );
+
+      Promise.all(promesas)
+        .then(() => {
+          // Eliminar los pedidos de la mesa después de guardar las ventas usando DELETE
+          return fetch(`/pedido/eliminar-por-mesa/${id_mesa}`, {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' }
+          });
+        })
+        .then(res => {
+          if (!res.ok) throw new Error('No se pudo eliminar la orden');
+          // Aquí generas y descargas el PDF
+          doc.save(`Ticket_Mesa_${document.getElementById('mesa-num').textContent}.pdf`);
+          // Volver a renderizar la lista de artículos
+          renderizarListaArticulos();
+        })
+        .catch(e => {
+          alert('Error guardando ventas o eliminando la orden');
+          console.error(e);
+        });
+
+      // --- FIN ENVÍO DE DATOS A LA API /venta ---
+
+      // Tablas de personas
+      mesas.forEach((tabla, idx) => {
+        const personaTitulo = tabla.previousElementSibling.textContent;
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'bold');
+        doc.text(personaTitulo, 40, y, { align: 'center' });
+        y += 6;
+
+        // Extrae los datos de la tabla
+        const head = [];
+        tabla.querySelectorAll('thead th').forEach(th => head.push(th.textContent));
+        const body = [];
+        tabla.querySelectorAll('tbody tr').forEach(tr => {
+          const row = [];
+          tr.querySelectorAll('td').forEach(td => row.push(td.textContent));
+          body.push(row);
+        });
+
+        doc.autoTable({
+          head: [head],
+          body: body,
+          startY: y,
+          theme: 'plain',
+          styles: { fontSize: 9, cellPadding: 1, halign: 'center' },
+          margin: { left: 2, right: 2 },
+          tableWidth: 76
+        });
+        y = doc.lastAutoTable.finalY + 4;
+      });
+
+      // Tabla de total
+      const totalTable = document.querySelector('.tabla-total');
+      if (totalTable) {
+        const totalHead = [];
+        totalTable.querySelectorAll('thead th').forEach(th => totalHead.push(th.textContent));
+        const totalBody = [];
+        totalTable.querySelectorAll('tbody tr').forEach(tr => {
+          const row = [];
+          tr.querySelectorAll('td').forEach(td => row.push(td.textContent));
+          totalBody.push(row);
+        });
+
+        doc.autoTable({
+          head: [totalHead],
+          body: totalBody,
+          startY: y,
+          theme: 'plain',
+          styles: { fontSize: 11, cellPadding: 1, fillColor: [220, 220, 220], halign: 'center' },
+          margin: { left: 2, right: 2 },
+          tableWidth: 76,
+          columnStyles: {
+            0: { cellWidth: 38 },
+            1: { cellWidth: 38 }
+          },
+          didParseCell: function (data) {
+            if (
+              data.section === 'body' &&
+              data.row.index === totalBody.length - 1 &&
+              data.column.index === 1
+            ) {
+              data.cell.styles.fontStyle = 'bold';
+              data.cell.styles.fontSize = 14;
+              data.cell.styles.textColor = [0, 0, 0];
+            }
+          }
+        });
+        y = doc.lastAutoTable.finalY + 4;
+      }
+
+      // Mensaje de agradecimiento
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'bold');
+      doc.text('¡Gracias por su visita!', 40, y += 10, { align: 'center' });
+
+      doc.save(`Ticket_Mesa_${document.getElementById('mesa-num').textContent}.pdf`);
+    }
+    
+    let extras = [];
+
+    // Mostrar formulario de añadir
+    function mostrarFormularioExtra() {
+      document.getElementById('form-extra').style.display = 'block';
+      document.getElementById('form-eliminar-extra').style.display = 'none';
+    }
+
+    // Ocultar formulario de añadir
+    function ocultarFormularioExtra() {
+      document.getElementById('form-extra').style.display = 'none';
+    }
+
+    // Mostrar formulario de eliminar
+    function mostrarEliminarExtra() {
+      // Cambia el modo de la tabla para mostrar iconos de eliminar en cada fila
+      const cont = document.getElementById('orden-lista');
+      fetch('/pedido/por-mesa', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id_mesa })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (!data || data.length === 0) {
+          cont.innerHTML = '<div class="sin-productos">No hay productos en la orden.</div>';
+          return;
+        }
+        // Agrupar por id_persona
+        const grupos = {};
+        data.forEach(item => {
+          if (!grupos[item.id_persona]) grupos[item.id_persona] = [];
+          grupos[item.id_persona].push(item);
+        });
+        let html = '';
+        Object.keys(grupos).forEach(id_persona => {
+          const titulo = (id_persona == 10) ? 'Extra' : `Persona ${id_persona}`;
+          html += `<h3>${titulo}</h3>`;
+          html += `<table class="orden-tabla">
+            <thead>
+              <tr>
+                <th>Producto</th>
+                <th>Categoría</th>
+                <th>Cantidad</th>
+                <th>Precio</th>
+                <th>Eliminar</th>
+              </tr>
+            </thead>
+            <tbody>`;
+          grupos[id_persona].forEach(item => {
+            const precio = item.precio !== undefined ? Number(item.precio) : 0;
+            html += `<tr>
+              <td>${item.nombre}</td>
+              <td>${item.categoria}</td>
+              <td>${item.cantidad_productos}</td>
+              <td>$${precio.toFixed(2)}</td>
+              <td><img src="../../recursos/eliminar.png" alt="Eliminar" title="Eliminar" style="cursor:pointer;width:22px;" onclick="eliminarProductoPedido('${item.id_pedido}')"></td>
+            </tr>`;
+          });
+          html += '</tbody></table>';
+        });
+        cont.innerHTML = html;
+      })
+      .catch(() => {
+        cont.textContent = 'Error al cargar la orden.';
+      });
+      document.getElementById('form-eliminar-extra').style.display = 'none';
+      document.getElementById('form-extra').style.display = 'none';
+    }
+
+    // Eliminar producto de la tabla pedido
+    function eliminarProductoPedido(id_pedido) {
+      if (!confirm('¿Seguro que deseas eliminar este producto de la orden?')) return;
+      fetch(`/pedido/${id_pedido}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' }
+      })
+      .then(res => {
+        if (!res.ok) throw new Error('No se pudo eliminar el producto');
+        mostrarEliminarExtra(); // Refresca la tabla
+      })
+      .catch(e => {
+        alert('Error eliminando el producto');
+        console.error(e);
+      });
+    }
+
+    // Agregar producto extra
+    function agregarExtra() {
+      const nombre = document.getElementById('extra-nombre').value.trim();
+      const cantidad = parseInt(document.getElementById('extra-cantidad').value, 10);
+      const precio = parseFloat(document.getElementById('extra-precio').value);
+
+      if (!nombre || isNaN(cantidad) || isNaN(precio)) {
+        alert('Completa todos los campos correctamente.');
+        return;
+      }
+
+      extras.push({ nombre, cantidad, precio });
+      document.getElementById('extra-nombre').value = '';
+      document.getElementById('extra-cantidad').value = 1;
+      document.getElementById('extra-precio').value = '';
+      ocultarFormularioExtra();
+      renderizarExtras();
+    }
+
+    // Actualiza el select de productos extra para eliminar
+    function actualizarSelectEliminar() {
+      const select = document.getElementById('extra-eliminar-select');
+      select.innerHTML = '';
+      extras.forEach((e, idx) => {
+        const option = document.createElement('option');
+        option.value = idx;
+        option.textContent = `${e.nombre} (x${e.cantidad}) - $${e.precio.toFixed(2)}`;
+        select.appendChild(option);
+      });
+    }
+
+    // Eliminar producto extra seleccionado
+    function eliminarExtra() {
+      const idx = document.getElementById('extra-eliminar-select').value;
+      if (idx !== '' && extras[idx]) {
+        extras.splice(idx, 1);
+        renderizarExtras();
+        actualizarSelectEliminar();
+      }
+      ocultarEliminarExtra();
+    }
+
+    // Renderizar tabla de extras
+    function renderizarExtras() {
+      const cont = document.getElementById('extras-lista');
+      if (extras.length === 0) {
+        cont.innerHTML = '';
+        return;
+      }
+      let html = `<table class="tabla-extras">
+        <thead>
+          <tr>
+            <th>Producto Extra</th>
+            <th>Cantidad</th>
+            <th>Precio</th>
+            <th>Subtotal</th>
+          </tr>
+        </thead>
+        <tbody>`;
+      let totalExtras = 0;
+      extras.forEach(e => {
+        const subtotal = e.cantidad * e.precio;
+        totalExtras += subtotal;
+        html += `<tr>
+          <td>${e.nombre}</td>
+          <td>${e.cantidad}</td>
+          <td>$${e.precio.toFixed(2)}</td>
+          <td>$${subtotal.toFixed(2)}</td>
+        </tr>`;
+      });
+      html += `<tr>
+        <td colspan="3"><strong>Total extras</strong></td>
+        <td><strong>$${totalExtras.toFixed(2)}</strong></td>
+      </tr>`;
+      html += '</tbody></table>';
+      cont.innerHTML = html;
+    }
+
+    function redirigirNuevaPersona() {
+      // Redirige a nuevaPersona.html con id_persona=10 para marcarlo como "extra"
+      window.location.href = `nuevaPersona.html?mesa=${id_mesa}&persona=10`;
+    }
+
+    // Nueva función para renderizar la lista de artículos
+    function renderizarListaArticulos() {
+      fetch('/pedido/por-mesa', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id_mesa })
+      })
+      .then(res => res.json())
+      .then(data => {
+        const cont = document.getElementById('orden-lista');
+        if (!data || data.length === 0) {
+          cont.innerHTML = '<div class="sin-productos">No hay productos en la orden.</div>';
+          return;
+        }
+        // Agrupar por id_persona
+        const grupos = {};
+        data.forEach(item => {
+          if (!grupos[item.id_persona]) grupos[item.id_persona] = [];
+          grupos[item.id_persona].push(item);
+        });
+        let html = '';
+        let total = 0;
+        data.forEach(item => {
+          const precio = item.precio !== undefined ? Number(item.precio) : 0;
+          const subtotal = precio * Number(item.cantidad_productos);
+          total += subtotal;
+        });
+        Object.keys(grupos).forEach(id_persona => {
+          const titulo = (id_persona == 10) ? 'Extra' : `Persona ${id_persona}`;
+          html += `<h3>${titulo}</h3>`;
+          html += `<table class="orden-tabla">
+            <thead>
+              <tr>
+                <th>Producto</th>
+                <th>Categoría</th>
+                <th>Cantidad</th>
+                <th>Precio</th>
+              </tr>
+            </thead>
+            <tbody>`;
+          grupos[id_persona].forEach(item => {
+            const precio = item.precio !== undefined ? Number(item.precio) : 0;
+            html += `<tr>
+              <td>${item.nombre}</td>
+              <td>${item.categoria}</td>
+              <td>${item.cantidad_productos}</td>
+              <td>$${precio.toFixed(2)}</td>
+            </tr>`;
+          });
+          html += '</tbody></table>';
+        });
+        html += `<table class="tabla-total">
+          <thead>
+            <tr>
+              <th>Total mesa ${id_mesa}</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Costo total</td>
+              <td>$${total.toFixed(2)}</td>
+            </tr>
+          </tbody>
+        </table>`;
+        cont.innerHTML = html;
+      })
+      .catch(() => {
+        document.getElementById('orden-lista').textContent = 'Error al cargar la orden.';
+      });
+    }
+
+  </script>
+</body>
+</html>

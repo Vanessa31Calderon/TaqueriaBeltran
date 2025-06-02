@@ -1,0 +1,86 @@
+<!-- Documento html para la interfaz de un tipo informe
+ de ventas que ha generado la taqueria con la opcion de generarlo diario
+ mensual o semanal -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Reporte de Ventas</title>
+  <link rel="stylesheet" href="../../css/Admin/GenerarReporte.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+</head>
+<body>
+  <div class="reporte-container">
+    <h2 class="reporte-titulo">Reporte de Ventas</h2>
+    <form class="reporte-form" action="#" method="post">
+      </select>
+
+      <label class="reporte-label" for="fecha_inicio">Fecha inicio</label>
+      <input class="reporte-input" type="date" id="fecha_inicio" name="fecha_inicio" required />
+      <label class="reporte-label" for="fecha_fin">Fecha final</label>
+      <input class="reporte-input" type="date" id="fecha_fin" name="fecha_fin" required />
+      <button type="submit" class="reporte-btn-principal">Generar Reporte</button>
+      <button type="button" class="reporte-btn-secundario">Cancelar</button>
+      <a href="InicioAdmin.html" class="reporte-btn-regresar">Regresar</a>
+    </form>
+  </div>
+  <script>
+    document.querySelector('.reporte-form').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const fechaInicio = document.getElementById('fecha_inicio').value;
+      const fechaFin = document.getElementById('fecha_fin').value;
+      if (!fechaInicio || !fechaFin) return alert('Selecciona ambas fechas');
+      if (fechaInicio > fechaFin) return alert('La fecha de inicio no puede ser mayor que la final');
+      try {
+        const res = await fetch('/venta/reporte', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ fechaInicio, fechaFin })
+        });
+        const ventas = await res.json();
+        if (!ventas.length) {
+          alert('No se encontraron ventas en el rango seleccionado.');
+          return;
+        }
+        // Agrupar productos por nombre y sumar cantidad y total
+        const resumen = {};
+        let totalGeneral = 0;
+        ventas.forEach(v => {
+          if (!resumen[v.nombre]) {
+            resumen[v.nombre] = {
+              nombre: v.nombre,
+              categoria: v.categoria,
+              cantidad: 0,
+              total: 0
+            };
+          }
+          resumen[v.nombre].cantidad += v.cantidad_productos;
+          resumen[v.nombre].total += v.precio * v.cantidad_productos;
+          totalGeneral += v.precio * v.cantidad_productos;
+        });
+        // Preparar datos para la tabla
+        const rows = Object.values(resumen).map(r => [r.nombre, r.categoria, r.cantidad, `$${r.total.toFixed(2)}`]);
+        // Crear PDF
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        doc.setFontSize(16);
+        doc.text('TAQUERÍA BELTRÁN', 105, 15, { align: 'center' });
+        doc.setFontSize(12);
+        doc.text(`Desde: ${fechaInicio}  Hasta: ${fechaFin}`, 105, 25, { align: 'center' });
+        doc.autoTable({
+          head: [['Producto', 'Categoría', 'Cantidad', 'Total']],
+          body: rows,
+          startY: 35
+        });
+        doc.setFontSize(13);
+        doc.text(`Total general: $${totalGeneral.toFixed(2)}`, 105, doc.lastAutoTable.finalY + 15, { align: 'center' });
+        doc.save(`Reporte_Ventas_${fechaInicio}_a_${fechaFin}.pdf`);
+      } catch (e) {
+        alert('Error al generar el reporte');
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,55 @@
+<!-- Este archivo representa la página para gestionar los pedidos de una mesa específica en el sistema de gestión 
+de pedidos. Proporciona una interfaz gráfica que permite al mesero realizar las siguientes acciones: 
+- Añadir personas a la mesa. 
+- Visualizar la orden actual de la mesa. 
+- Enviar el pedido al sistema. 
+El número de la mesa se muestra dinámicamente en la página, basado en los parámetros de la URL. 
+Incluye botones estilizados para facilitar la navegación y ejecución de las acciones. -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Seleccionar Pedidos</title>
+  <link rel="stylesheet" href="/css/Mesero/tomarPedido.css">
+</head>
+<body>
+  <div class="container">
+    <div class="mesa-display">
+      <span id="mesa-seleccionada"></span>
+    </div>
+
+    <!-- Opciones -->
+    <div class="mesa-opciones">
+      <button class="btn-opcion" onclick="redirigirnuevaPersona()">Añadir persona</button>
+      <button class="btn-opcion" onclick="redirigirVisualizarOrden()">Visualizar orden</button>
+      <button class="btn-opcion" onclick="redirigirVolver()">Volver</button>
+    </div>
+  </div>
+
+  <script>
+    // Obtener los parámetros de la URL
+    const params = new URLSearchParams(window.location.search);
+    const mesa = params.get('mesa'); // Captura el valor del parámetro 'mesa'
+    const persona = parseInt(params.get('persona')) || 1; // Captura el valor del parámetro 'persona', inicia en 1 si no existe
+
+    // Mostrar el número de la mesa
+    document.getElementById('mesa-seleccionada').textContent = `Mesa ${mesa}`;
+
+    // Función para redirigir a la página nuevaPersona.html
+    function redirigirnuevaPersona() {
+      // Redirigir a nuevaPersona.html sin incrementar el contador
+      localStorage.setItem('id_persona', persona);
+      window.location.href = `/html/Mesero/nuevaPersona.html?mesa=${mesa}&persona=${persona}`;
+    }
+    // Función para redirigir a visualizarOrden.html
+    function redirigirVisualizarOrden() {
+      window.location.href = `/html/Mesero/visualizarOrden.html?mesa=${mesa}`;
+    }
+    // Función para redirigir a la página anterior
+    function redirigirVolver() {
+      window.location.href = `/html/Mesero/disponibilidadMesas.html`;
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,79 @@
+<!--
+  Interfaz para agregar una nueva comida al sistema.
+  Permite al administrador ingresar el nombre, precio, categoría y una descripción del platillo. 
+  Al hacer clic en "Guardar", los datos se envían mediante POST al endpoint /api/producto para almacenarse
+  en la base de datos. Incluye opciones para seleccionar el tipo de platillo y un botón para regresar al menú anterior.
+-->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Agregar Comida</title>
+  <link rel="stylesheet" href="/css/Admin/Comidas.css" />
+</head>
+<body>
+  <div class="comidas-container">
+    <div class="comidas-box">
+      <h2 class="comidas-titulo">Agregar nueva comida</h2>
+      <form id="form-comida" class="comidas-form" action="#" method="post" enctype="multipart/form-data">
+        <input id="comidas-nombre" class="comidas-input" type="text" placeholder="Nombre del platillo" name="nombre" required />
+        <input id="comidas-precio" class="comidas-input" type="number" step="1" placeholder="Precio" name="precio" required />
+        <input id="comidas-descripcion" class="comidas-input" name="descripcion" type="text" placeholder="Descripción" required />
+        
+        <div class="comidas-radio-group">
+          <p class="comidas-tipo-label">Tipo de platillo:</p>
+          <div class="comidas-radio-options">
+            <label class="comidas-radio-label">
+              <input class="comida-categoria" type="radio" name="categoria" value="Asada" required /> Asada
+            </label>
+            <label class="comidas-radio-label">
+              <input class="comida-categoria" type="radio" name="categoria" value="Tripa" required /> Tripa
+            </label>
+          </div>
+        </div>
+
+        <div class="comidas-imagen-group">
+          <label for="comidas-imagen" class="comidas-imagen-label">Imagen:</label>
+          <input id="comidas-imagen" class="comidas-input" type="file" name="imagen" accept="image/*"/>
+        </div>
+
+        <button type="submit" class="comidas-btn-guardar">Guardar</button>
+      </form>
+
+      <a href="AgregarProductos.html" class="comidas-btn-regresar">Regresar</a>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById('form-comida').addEventListener('submit', registrarComida);
+
+    async function registrarComida(event) {
+      event.preventDefault();
+
+      const form = document.getElementById('form-comida');
+      const formData = new FormData(form);
+
+
+      try {
+        const response = await fetch('/api/productocomida', {
+          method: 'POST',
+          body: formData
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          alert('Producto guardado correctamente');
+          form.reset();
+        } else {
+          alert(data.message || 'Error al guardar el producto');
+        }
+      } catch (error) {
+        console.error('Error al guardar producto:', error);
+        alert('Error al conectar con el servidor.');
+      }
+    }
+  </script>
+</body>
+</html>

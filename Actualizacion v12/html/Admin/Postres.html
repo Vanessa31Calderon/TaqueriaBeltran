@@ -1,0 +1,71 @@
+<!-- Interfaz de la opción postre donde se puede 
+ introducir su información a la basd de datos-->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Agregar Postre</title>
+  <link rel="stylesheet" href="../../css/Admin/Postres.css" />
+</head>
+<body>
+  <div class="postres-container">
+    <div class="postres-box">
+      <h2 class="postres-titulo">Agregar nuevo postre</h2>
+      <form id="form-postres" class="form-postres" action="#" method="post" enctype="multipart/form-data">
+        <input id="postres-nombre" class="postres-input" type="text" placeholder="Nombre del postre" name="nombre" required />
+        <input id="postres-precio" class="postres-input" type="number" step="0.01" placeholder="Precio" name="precio" required />
+        <input id="descripcion" class="postres-input" type="text" placeholder="Descripción" name="descripcion" required />
+        <div class="postres-radio-group">
+          <p class="postres-radio-titulo">Tipo de postres:</p>
+          <div class="postres-radio-options">
+            <label class="postres-radio-label">
+            </label>
+          </div>
+          <div class="postres-imagen-group">
+          <label class="postres-radio-label">
+            <input class="postres-radio" type="radio" name="categoria" value="Postre" required /> Postres
+          </label>
+          <label for="postres-imagen" class="postres-imagen-label">Imagen:</label>
+          <input id="postres-imagen" class="postres-input" type="file" name="imagen" accept="image/*"/>
+        </div>
+        </div>
+
+        <button type="submit" class="postres-btn-guardar">Guardar</button>
+      </form>
+
+      <a href="AgregarProductos.html" class="postres-btn-regresar">Regresar</a>
+    </div>
+  </div>
+  <script>
+    document.getElementById('form-postres').addEventListener('submit', registrarPostre);
+
+    async function registrarPostre(event) {
+      event.preventDefault();
+
+      const form = document.getElementById('form-postres');
+      const formData = new FormData(form);
+
+
+      try {
+        const response = await fetch('/api/productopostre', {
+          method: 'POST',
+          body: formData
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          alert('Producto guardado correctamente');
+          form.reset();
+        } else {
+          alert(data.message || 'Error al guardar el producto');
+        }
+      } catch (error) {
+        console.error('Error al guardar producto:', error);
+        alert('Error al conectar con el servidor.');
+      }
+    }
+  </script>
+</body>
+</html>

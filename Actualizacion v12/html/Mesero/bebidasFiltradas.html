@@ -1,0 +1,148 @@
+<!--
+Esta página permite al mesero visualizar y filtrar los productos de bebidas disponibles por categoría (Refresco o Agua).
+Muestra una lista de productos con su precio, imagen, nombre y controles para agregar o eliminar unidades.
+Los productos y sus imágenes se obtienen dinámicamente desde la base de datos.
+El diseño está optimizado para uso en dispositivos móviles, facilitando la selección y gestión de productos en 
+la toma de pedidos.
+-->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Bebidas: Refrescos y Agua</title>
+  <link rel="stylesheet" href="/css/Mesero/bebidasFiltradas.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Bebidas:</h1>
+    <div class="filtros">
+      <button class="filtro-btn active" id="btn-refresco">Refrescos</button>
+      <button class="filtro-btn" id="btn-agua">Agua</button>
+    </div>
+    <div id="lista-bebidas"></div>
+    <!-- El botón solo se muestra si hay productos -->
+    <button class="agregar-productos-btn" id="btn-agregar-productos">Agregar productos</button>
+  </div>
+  <script>
+    let filtro = 'refresco';
+    let productosSeleccionados = [];
+
+    function renderBebidas(bebidas) {
+      const cont = document.getElementById('lista-bebidas');
+      const btnAgregar = document.getElementById('btn-agregar-productos');
+      cont.innerHTML = '';
+      productosSeleccionados = [];
+      if (bebidas.length === 0) {
+        cont.innerHTML = '<div class="sin-productos">No hay bebidas disponibles.</div>';
+        btnAgregar.style.display = 'none';
+        return;
+      }
+      btnAgregar.style.display = '';
+      bebidas.forEach(bebida => {
+        const div = document.createElement('div');
+        div.className = 'producto-card';
+        let cantidad = 0;
+        div.innerHTML = `
+          <div class="producto-precio">$${bebida.precio}</div>
+          <img class="producto-img" src="${bebida.imagen}">
+          <div class="producto-nombre">${bebida.nombre}</div> 
+          <div class="producto-nombre">${bebida.descripcion}</div>
+          <div class="producto-cantidad">
+            <button class="btn-eliminar">Eliminar</button>
+            <span class="contador">${cantidad}</span>
+            <button class="btn-agregar">Agregar</button>
+          </div>
+        `;
+        const btnEliminar = div.querySelector('.btn-eliminar');
+        const btnAgregar = div.querySelector('.btn-agregar');
+        const spanContador = div.querySelector('.contador');
+        btnEliminar.addEventListener('click', function() {
+          if (cantidad > 0) {
+            cantidad--;
+            spanContador.textContent = cantidad;
+            actualizarSeleccionados(bebida.id_producto, cantidad);
+          }
+        });
+        btnAgregar.addEventListener('click', function() {
+          cantidad++;
+          spanContador.textContent = cantidad;
+          actualizarSeleccionados(bebida.id_producto, cantidad);
+        });
+        cont.appendChild(div);
+        productosSeleccionados.push({ id_producto: bebida.id_producto, cantidad: 0 });
+      });
+    }
+
+    function actualizarSeleccionados(id_producto, cantidad) {
+      const prod = productosSeleccionados.find(p => p.id_producto === id_producto);
+      if (prod) prod.cantidad = cantidad;
+    }
+
+    function cargarBebidas() {
+      fetch('/api/bebidas-filtradas')
+        .then(res => res.json())
+        .then(bebidas => {
+          const filtradas = bebidas.filter(b => b.categoria.toLowerCase().includes(filtro));
+          renderBebidas(filtradas);
+        })
+        .catch(() => {
+          document.getElementById('lista-bebidas').textContent = 'Error al cargar las bebidas.';
+        });
+    }
+
+    document.getElementById('btn-refresco').addEventListener('click', function() {
+      filtro = 'refresco';
+      this.classList.add('active');
+      document.getElementById('btn-agua').classList.remove('active');
+      cargarBebidas();
+    });
+    document.getElementById('btn-agua').addEventListener('click', function() {
+      filtro = 'agua';
+      this.classList.add('active');
+      document.getElementById('btn-refresco').classList.remove('active');
+      cargarBebidas();
+    });
+
+    document.getElementById('btn-agregar-productos').addEventListener('click', async function() {
+      const seleccionados = productosSeleccionados.filter(p => p.cantidad > 0);
+      if (seleccionados.length === 0) {
+        alert('Selecciona al menos un producto.');
+        return;
+      }
+      const params = new URLSearchParams(window.location.search);
+      const id_mesa = parseInt(localStorage.getItem('id_mesa'));
+      const id_persona = parseInt(params.get('persona')) || 1;
+      const id_usuario = localStorage.getItem('id_usuario');
+      if (!id_usuario || !id_mesa || !id_persona) {
+        alert('Faltan datos para el pedido.');
+        return;
+      }
+      for (const prod of seleccionados) {
+        const body = {
+          id_usuario,
+          id_mesa,
+          id_producto: prod.id_producto,
+          cantidad_productos: prod.cantidad,
+          id_persona
+        };
+        try {
+          const res = await fetch('/pedido', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+          });
+          if (!res.ok) throw new Error('Error al guardar el pedido');
+        } catch (e) {
+          alert('Error al guardar el pedido: ' + e.message);
+          return;
+        }
+      }
+      alert('Pedido(s) guardado(s) correctamente.');
+      window.location.href = `nuevaPersona.html?mesa=${id_mesa}&persona=${id_persona}`;
+    });
+
+    // Carga inicial
+    cargarBebidas();
+  </script>
+</body>
+</html>

@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Mostrar Empleados</title>
+  <link rel="stylesheet" href="../../css/Admin/MostrarEmpleados.css" />
+</head>
+<body>
+  <div class="admin-empleados-container">
+    <h2 class="admin-empleados-titulo">Lista de Empleados</h2>
+
+    <!-- Buscador y botón -->
+    <div class="admin-empleados-busqueda-container">
+      <input type="text" id="buscador" placeholder="Buscar" class="admin-empleados-busqueda"/>
+    </div>
+
+    <!-- Tabla -->
+    <table class="admin-empleados-tabla">
+      <thead>
+        <tr>
+          <th>Nombres</th>
+          <th>Apellido</th>
+          <th>Rol</th>
+          <th>Accion</th>
+        </tr>
+      </thead>
+      <tbody id="tabla-cuerpo">
+      </tbody>
+    </table>
+
+    <a href="Empleados.html" class="admin-empleados-btn-regresar">Regresar</a>
+  </div>
+
+  <script>
+    let empleadosOriginales = [];
+
+    async function cargarEmpleados() {
+      try {
+        const response = await fetch('/usuario');
+        if (!response.ok) throw new Error('Error al obtener datos');
+
+        const empleados = await response.json();
+        empleadosOriginales = empleados;
+        mostrarEmpleados(empleados);
+      } catch (error) {
+        console.error('Error:', error);
+      }
+    }
+
+    function mostrarEmpleados(empleados) {
+      const tbody = document.getElementById('tabla-cuerpo');
+      tbody.innerHTML = '';
+
+      empleados.forEach(emp => {
+        const fila = document.createElement('tr');
+        fila.innerHTML = `
+          <td>${emp.nombres}</td>
+          <td>${emp.ap_paterno}</td>
+          <td>${emp.rol}</td>
+          <td>
+            <img src="../../recursos/editar.png" alt="Actualizar" title="Actualizar"
+                 class="icono-accion"
+                 onclick="actualizarEmpleado('${emp.id_usuario}')">
+            <img src="../../recursos/eliminar.png" alt="Eliminar" title="Eliminar"
+                 class="icono-accion"
+                 onclick="eliminarEmpleado('${emp.id_usuario}', '${emp.nombres}')">
+          </td>
+        `;
+        tbody.appendChild(fila);
+      });
+    }
+
+    function filtrarEmpleados() {
+      const texto = document.getElementById('buscador').value.toLowerCase();
+
+      const filtrados = empleadosOriginales.filter(emp =>
+        emp.nombres.toLowerCase().includes(texto) ||
+        emp.ap_paterno.toLowerCase().includes(texto) ||
+        emp.ap_materno.toLowerCase().includes(texto) ||
+        emp.correo.toLowerCase().includes(texto)
+      );
+
+      mostrarEmpleados(filtrados);
+    }
+
+    // Buscar en tiempo real
+    document.getElementById('buscador').addEventListener('input', filtrarEmpleados);
+
+    // Cargar empleados al iniciar
+    cargarEmpleados();
+
+    function actualizarEmpleado(id_usuario
+    ) {
+      // Redirigir a la página de actualización con el ID del empleado
+      localStorage.setItem('id_empleado', id_usuario);
+      window.location.href = `ActualizarEmpleados.html?id=${id_usuario}`;
+    }
+
+    async function eliminarEmpleado(id_usuario, nombre) {
+      if (confirm(`¿Seguro que deseas eliminar a ${nombre} ?`)) {
+        try {
+          const response = await fetch(`/usuario/${id_usuario}`, { method: 'DELETE' });
+          if (!response.ok) throw new Error('Error al eliminar');
+          alert(`Empleado "${nombre}" eliminado correctamente.`);
+          cargarEmpleados();
+        } catch (error) {
+          alert('No se pudo eliminar el empleado');
+        }
+      }
+    }
+  </script>
+</body>
+</html>
+

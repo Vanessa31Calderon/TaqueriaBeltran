@@ -1,0 +1,75 @@
+<!-- Este archivo representa la página de inicio de sesión para el sistema de gestión de la Taquería Beltrán. 
+Proporciona una interfaz gráfica que permite a los usuarios autenticarse ingresando su nombre de usuario y contraseña. 
+Incluye los siguientes elementos: 
+- Un logo representativo de la taquería, ubicado en la parte superior de la página. 
+- Un formulario con campos para ingresar el nombre de usuario y la contraseña. 
+- Un enlace para recuperar la contraseña en caso de olvido. 
+- Un botón para enviar el formulario y proceder con el inicio de sesión. -->
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Iniciar Sesión - Taquería Beltrán</title>
+  <link rel="stylesheet" href="../css/index.css">
+</head>
+<body>
+  <div class="login-container">
+    <div class="logo-container">
+      <img src="../recursos/logo-taqueria.png" alt="Logo Taquería Beltrán" class="logo">
+    </div>
+
+    <form class="login-form" onsubmit="iniciarSesion(event)">
+      <div class="form-group">
+        <label for="usuario">Usuario</label>
+        <input type="text" id="usuario" placeholder="Ingrese su usuario" required>
+      </div>
+
+      <div class="form-group">
+        <label for="contrasena">Contraseña</label>
+        <input type="password" id="contraseña" placeholder="Ingrese su contraseña" required>
+      </div>
+
+      <button type="submit" class="login-button">Iniciar sesión</button>
+    </form>
+  </div>
+
+  <script>
+    async function iniciarSesion(event) {
+        event.preventDefault(); // Evitar el envío del formulario
+
+        // Obtener los valores del formulario
+        const correo = document.getElementById('usuario').value;
+        const contraseña = document.getElementById('contraseña').value;
+
+        try {
+            // Enviar los datos al servidor
+            const response = await fetch('/api/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ correo, contraseña }),
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                // Almacenar el ID del usuario en localStorage
+                localStorage.setItem('id_usuario', data.user.id_usuario);
+                localStorage.setItem('nombres', data.user.nombres);
+
+                // Redirigir a la URL proporcionada por el servidor
+                window.location.href = data.redirect;
+            } else {
+                alert(data.message); // Mostrar mensaje de error
+            }
+        } catch (error) {
+            console.error('Error al iniciar sesión:', error);
+            alert('Error al conectar con el servidor.');
+        }
+    }
+  </script>
+</body>
+</html>

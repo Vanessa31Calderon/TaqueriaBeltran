@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Postres</title>
+  <link rel="stylesheet" href="/css/Mesero/postresFiltrados.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Postres: </h1>
+    <div class="filtros">
+      <button class="filtro-btn active" id="btn-postre">Postre</button>
+    </div>
+    <div id="lista-postres"></div>
+    <button class="agregar-productos-btn" id="btn-agregar-productos">Agregar productos</button>
+  </div>
+  <script>
+    let productosSeleccionados = [];
+
+    function renderPostres(postres) {
+      const cont = document.getElementById('lista-postres');
+      const btnAgregar = document.getElementById('btn-agregar-productos');
+      cont.innerHTML = '';
+      productosSeleccionados = [];
+      if (postres.length === 0) {
+        cont.innerHTML = '<div class="sin-productos">No hay postres disponibles.</div>';
+        btnAgregar.style.display = 'none';
+        return;
+      }
+      btnAgregar.style.display = '';
+      postres.forEach(postre => {
+        const div = document.createElement('div');
+        div.className = 'producto-card';
+        let cantidad = 0;
+        div.innerHTML = `
+          <div class="producto-precio">$${postre.precio}</div>
+          <img class="producto-img" src="${postre.imagen}">
+          <div class="producto-nombre">${postre.nombre}</div> 
+          <div class="producto-nombre">${postre.descripcion}</div>
+          <div class="producto-cantidad">
+            <button class="btn-eliminar">Eliminar</button>
+            <span class="contador">${cantidad}</span>
+            <button class="btn-agregar">Agregar</button>
+          </div>
+        `;
+        const btnEliminar = div.querySelector('.btn-eliminar');
+        const btnAgregar = div.querySelector('.btn-agregar');
+        const spanContador = div.querySelector('.contador');
+        btnEliminar.addEventListener('click', function() {
+          if (cantidad > 0) {
+            cantidad--;
+            spanContador.textContent = cantidad;
+            actualizarSeleccionados(postre.id_producto, cantidad);
+          }
+        });
+        btnAgregar.addEventListener('click', function() {
+          cantidad++;
+          spanContador.textContent = cantidad;
+          actualizarSeleccionados(postre.id_producto, cantidad);
+        });
+        cont.appendChild(div);
+        productosSeleccionados.push({ id_producto: postre.id_producto, cantidad: 0 });
+      });
+    }
+
+    function actualizarSeleccionados(id_producto, cantidad) {
+      const prod = productosSeleccionados.find(p => p.id_producto === id_producto);
+      if (prod) prod.cantidad = cantidad;
+    }
+
+    document.getElementById('btn-agregar-productos').addEventListener('click', async function() {
+      const seleccionados = productosSeleccionados.filter(p => p.cantidad > 0);
+      if (seleccionados.length === 0) {
+        alert('Selecciona al menos un producto.');
+        return;
+      }
+      const params = new URLSearchParams(window.location.search);
+      const id_mesa = parseInt(localStorage.getItem('id_mesa'));
+      const id_persona = parseInt(params.get('persona')) || 1;
+      const id_usuario = localStorage.getItem('id_usuario');
+      if (!id_usuario || !id_mesa || !id_persona) {
+        alert('Faltan datos para el pedido.');
+        return;
+      }
+      for (const prod of seleccionados) {
+        const body = {
+          id_usuario,
+          id_mesa,
+          id_producto: prod.id_producto,
+          cantidad_productos: prod.cantidad,
+          id_persona
+        };
+        try {
+          const res = await fetch('/pedido', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+          });
+          if (!res.ok) throw new Error('Error al guardar el pedido');
+        } catch (e) {
+          alert('Error al guardar el pedido: ' + e.message);
+          return;
+        }
+      }
+      alert('Pedido(s) guardado(s) correctamente.');
+      window.location.href = `nuevaPersona.html?mesa=${id_mesa}&persona=${id_persona}`;
+    });
+
+    function cargarPostres() {
+      fetch('/api/postres-filtrados')
+        .then(res => res.json())
+        .then(postres => {
+          // Si tu backend ya filtra por postre, solo renderiza
+          renderPostres(postres);
+        })
+        .catch(() => {
+          document.getElementById('lista-postres').textContent = 'Error al cargar los postres.';
+        });
+    }
+
+    // Carga inicial
+    cargarPostres();
+  </script>
+</body>
+</html>

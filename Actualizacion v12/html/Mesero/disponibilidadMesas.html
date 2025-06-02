@@ -1,0 +1,73 @@
+<!-- Este archivo representa la página para mostrar la disponibilidad de mesas en el sistema de gestión de pedidos.
+Proporciona una interfaz gráfica que permite al mesero seleccionar una mesa específica para gestionar los pedidos. 
+Incluye una lista de botones, cada uno representando una mesa numerada, que redirigen a la página de selección de
+pedidos con el número de mesa correspondiente. La funcionalidad de redirección se implementa mediante una función 
+JavaScript que pasa el número de la mesa como parámetro en la URL. -->
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mesas Disponibles</title>
+  <link rel="stylesheet" href="/css/Mesero/disponibilidadMesas.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Seleccionar mesa:</h1>
+
+    <!-- Lista de mesas -->
+    <div class="mesa-lista" id="mesa-lista">
+      <!-- Los botones de mesas se generarán dinámicamente aquí -->
+    </div>
+    <div style="text-align:center; margin-top: 30px;">
+      <button class="btn-volver" onclick="window.location.href='inicioMesero.html'">Volver</button>
+    </div>
+  </div>
+
+  <script>
+    function redirigirMesa(mesa) {
+      // Guardar el número de mesa en localStorage
+      localStorage.setItem('id_mesa', mesa);
+      // Redirigir a la página de seleccionar pedidos con el número de la mesa
+      window.location.href = `tomarPedido.html?mesa=${mesa}`;
+    }
+
+    // Renderizar mesas dinámicamente
+    async function renderizarMesas() {
+      const cont = document.getElementById('mesa-lista');
+      cont.innerHTML = 'Cargando mesas...';
+      try {
+        // Obtener todas las mesas
+        const resMesas = await fetch('/api/mesas');
+        const mesas = await resMesas.json();
+        // Obtener todos los pedidos activos
+        const resPedidos = await fetch('/pedido');
+        const pedidos = await resPedidos.json();
+        // Determinar mesas ocupadas
+        const mesasOcupadas = new Set(pedidos.map(p => p.id_mesa));
+        cont.innerHTML = '';
+        if (!mesas.length) {
+          cont.innerHTML = '<div style="color:white">No hay mesas registradas.</div>';
+          return;
+        }
+        mesas.forEach(mesa => {
+          const btn = document.createElement('button');
+          btn.className = 'btn-mesa';
+          btn.textContent = `Mesa ${mesa.id_mesa}`;
+          btn.onclick = () => redirigirMesa(mesa.id_mesa);
+          if (mesasOcupadas.has(mesa.id_mesa)) {
+            btn.style.backgroundColor = '#A4161A'; // Rojo si ocupada
+          } else {
+            btn.style.backgroundColor = '#3C8B5E'; // Verde si libre
+          }
+          cont.appendChild(btn);
+        });
+      } catch (e) {
+        cont.innerHTML = '<div style="color:white">Error al cargar las mesas.</div>';
+      }
+    }
+    renderizarMesas();
+  </script>
+</body>
+</html>

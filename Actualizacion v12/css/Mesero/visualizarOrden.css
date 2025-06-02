@@ -1,0 +1,176 @@
+body {
+  font-family: 'Segoe UI', sans-serif;
+  background-color: #2F2C2C;
+  color: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0;
+}
+
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px 0;
+}
+
+.container h3 {
+  text-align: left;
+}
+
+h1 {
+  margin-bottom: 20px;
+  font-size: 3.5rem;
+}
+
+#orden-lista {
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+.orden-ul {
+  list-style: none;
+  padding: 0;
+}
+
+.orden-item {
+  background: #3a3333;
+  margin-bottom: 10px;
+  padding: 10px;
+  border-radius: 8px;
+  font-size: 16px;
+}
+
+.btn-volver {
+  background: #8B5E3C;
+}
+
+.btn-volver:hover {
+  background-color: #A67C52;
+}
+
+.sin-productos {
+  color: #000;
+  background: #fff;
+  font-size: 1.5rem;
+  padding: 40px;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.orden-tabla,
+.tabla-total {
+  width: 100%;
+  table-layout: fixed; /* Fijar el tamaño de columnas */
+  border-collapse: collapse;
+  margin-bottom: 2rem;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  border-radius: 8px;
+  overflow: hidden;
+  color: #111;
+  font-size: 2rem;
+}
+
+.orden-tabla th, .orden-tabla td,
+.tabla-total th, .tabla-total td {
+  width: 40%; 
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
+  padding: 0.75rem 1rem;
+  text-align: left;
+  color: #111;
+}
+
+.orden-tabla th {
+  background: #A67C52;
+  font-weight: 600;
+  letter-spacing: 1px;
+}
+
+.orden-tabla tr:nth-child(even) {
+  background: #f6f6f6;
+}
+
+.orden-tabla tr:hover {
+  background: #bea773;
+}
+
+.orden-tabla td {
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.orden-tabla tr:last-child td {
+  border-bottom: none;
+}
+
+h3 {
+  margin-top: 1rem;
+  color: #b88d16;
+  font-size: 3rem;
+}
+
+.tabla-total th {
+  background: #8B141E;
+  color: #fff;
+  font-weight: 400;
+  text-align: center;
+  letter-spacing: 1px;
+}
+
+.tabla-total td {
+  font-weight: bold;
+  border-bottom: 1px solid #e0e0e0;
+  text-align: center;
+  padding: 0.75rem 1rem;
+}
+
+.tabla-total tr:last-child td {
+  border-bottom: none;
+}
+
+
+@media (max-width: 600px) {
+  .tabla-total, .orden-tabla {
+    font-size: 1.3rem;
+    max-width: 98vw;
+  }
+}
+
+.btn-wrapper {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  max-width: 800px;
+  margin: 30px auto 0 auto;
+}
+
+.btn-volver, .btn-ticket {
+  flex: 1 1 0;
+  padding: 20px 20px;
+  font-size: 1.5rem;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-volver {
+  background: #8B5E3C;
+  color: #fff;
+}
+
+.btn-volver:hover {
+  background: #A67C52;
+}
+
+.btn-ticket {
+  background: #3C8B5E;
+  color: #fff;
+  margin-left: 16px;
+}
+
+.btn-ticket:hover {
+  background: #52A67C;
+}

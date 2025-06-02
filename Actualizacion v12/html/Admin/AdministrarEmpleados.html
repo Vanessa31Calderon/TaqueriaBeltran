@@ -1,0 +1,82 @@
+<!-- Este documento HTML es la interfaz donde se insertan empleados -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Insertar Empleados</title>
+  <link rel="stylesheet" href="../../css/Admin/AdministrarEmpleados.css" />
+</head>
+<body>
+  <div class="admin-empleados-container">
+    <h2 class="admin-empleados-titulo">Insertar Empleados</h2>
+    <form class="admin-empleados-form" action="#" method="post">
+      <label for="nombre" class="admin-empleados-label">Nombres</label>
+      <input type="text" id="nombre" name="nombre" class="admin-empleados-input" required />
+
+      <label for="ap_paterno" class="admin-empleados-label">Apellido Paterno</label>
+      <input type="text" id="ap_paterno" name="ap_paterno" class="admin-empleados-input" required />
+
+      <label for="ap_materno" class="admin-empleados-label">Apellido Materno</label>
+      <input type="text" id="ap_materno" name="ap_materno" class="admin-empleados-input" required />
+
+      <label for="correo" class="admin-empleados-label">Correo</label>
+      <input type="text" id="correo" name="correo" class="admin-empleados-input" required />
+
+      <label for="contraseña" class="admin-empleados-label">Contraseña</label>
+      <input type="text" id="contraseña" name="contraseña" class="admin-empleados-input" required />
+
+      <label for="rol" class="admin-empleados-label">Rol</label>
+      <input type="text" id="rol" name="rol" class="admin-empleados-input" required />
+
+      <button type="submit" class="admin-empleados-btn-principal">Guardar Empleado</button>
+      <button type="button" class="admin-empleados-btn-secundario" id="btn-cancelar">Cancelar</button>
+      <a href="Empleados.html" class="admin-empleados-btn-regresar">Regresar</a>
+    </form>
+  </div>
+
+  <script>
+    const formulario = document.querySelector('.admin-empleados-form');
+
+    formulario.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const datos = {
+        nombres: document.getElementById('nombre').value,
+        ap_paterno: document.getElementById('ap_paterno').value,
+        ap_materno: document.getElementById('ap_materno').value,
+        correo: document.getElementById('correo').value,
+        contraseña: document.getElementById('contraseña').value,
+        rol: document.getElementById('rol').value,
+      };
+
+      try {
+        const response = await fetch('/usuario?rol=administrador', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(datos)
+        });
+
+        if (response.ok) {
+          alert('Empleado guardado correctamente');
+          formulario.reset();
+        } else {
+          const errorText = await response.text();
+          alert('Error al guardar empleado: ' + errorText);
+        }
+      } catch (error) {
+        console.error('Error al enviar datos:', error);
+        alert('Error al conectar con el servidor');
+      }
+    });
+
+    // Botón Cancelar: limpiar formulario
+    document.getElementById('btn-cancelar').addEventListener('click', () => {
+      formulario.reset();
+    });
+  </script>
+</body>
+</html>
+

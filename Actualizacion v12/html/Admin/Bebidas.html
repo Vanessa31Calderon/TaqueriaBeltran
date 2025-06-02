@@ -1,0 +1,72 @@
+<!-- Interfaz de la opción bebida donde se puede 
+ introducir su información a la basd de datos-->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Agregar Bebida</title>
+ <link rel="stylesheet" href="../../css/Admin/Bebidas.css" />
+</head>
+<body>
+  <div class="bebidas-container">
+    <div class="bebidas-box">
+      <h2 class="bebidas-titulo">Agregar nueva bebida</h2>
+      <form id="form-bebida" class="bebidas-form" action="#" method="post" enctype="multipart/form-data">
+        <input id="nombre" class="bebidas-input" type="text" placeholder="Nombre de la bebida" name="nombre" required />
+        <input id="precio" class="bebidas-input" type="number" step="0.01" placeholder="Precio" name="precio" required />
+        <input id="descripcion" class="bebidas-input" type="text" placeholder="Descripcion" name="descripcion" required />
+        <input id="marca" class="bebidas-input" type="text" placeholder="Marca" name="marca" required />
+
+        <div class="bebidas-radio-group">
+          <p class="bebidas-radio-titulo">Tipo de bebida:</p>
+          <div class="comidas-radio-options">
+            <label class="bebidas-radio-label">
+              <input class="bebidas-radio" type="radio" name="categoria" value="Refresco" required /> Refresco
+            </label>
+            <label class="bebidas-radio-label">
+              <input class="bebidas-radio" type="radio" name="categoria" value="Agua" required /> Agua
+            </label>
+          </div>
+        </div>
+        <div class="bebidas-imagen-group">
+          <label for="bebidas-imagen" class="bebidas-imagen-label">Imagen:</label>
+          <input id="bebidas-imagen" class="bebidas-input" type="file" name="imagen" accept="image/*"/>
+        </div>
+        <div class="bebidas-btns">
+          <button type="submit" class="bebidas-btn-guardar">Guardar</button>
+          <a href="AgregarProductos.html" class="bebidas-btn-regresar">Regresar</a>
+        </div>
+      </form>
+    </div>
+  </div>
+<script>
+    document.getElementById('form-bebida').addEventListener('submit', registrarBebida);
+    async function registrarBebida(event) {
+      event.preventDefault();
+
+      const form = document.getElementById('form-bebida');
+      const formData = new FormData(form);
+
+      try {
+        const response = await fetch('/api/productobebidas', {
+          method: 'POST',
+          body: formData
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          alert('Producto guardado correctamente');
+          form.reset();
+        } else {
+          alert(data.message || 'Error al guardar el producto');
+        }
+      } catch (error) {
+        console.error('Error al guardar producto:', error);
+        alert('Error al conectar con el servidor.');
+      }
+    }
+  </script>
+</body>
+</html>
